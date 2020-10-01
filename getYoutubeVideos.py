@@ -1,32 +1,42 @@
-import urllib
-import json
+# -*- coding: utf-8 -*-
 
-api_key = "AIzaSyBNdaGj26VeSj-WkNd9GVs0wc9gtqLjS4I"
-channel_id = "UCMs8l2DQ7S6tiBDBSn_4isA"
+# Sample Python code for youtube.search.list
+# See instructions for running these code samples locally:
+# https://developers.google.com/explorer-help/guides/code_samples#python
 
-base_video_url = 'https://www.youtube.com/watch?v='
-base_search_url = 'https://www.googleapis.com/youtube/v3/search?'
+import os
 
-first_url = base_search_url + \
-    'key={}&channelId={}&part=snippet,id&order=date&maxResults=25'.format(
-        api_key, channel_id)
+import google_auth_oauthlib.flow
+import googleapiclient.discovery
+import googleapiclient.errors
 
-video_links = []
-url = first_url
-while True:
-    inp = urllib.urlopen(url)
-    resp = json.load(inp)
+scopes = ["https://www.googleapis.com/auth/youtube.force-ssl"]
 
-    print(resp)
+def main():
+    # Disable OAuthlib's HTTPS verification when running locally.
+    # *DO NOT* leave this option enabled in production.
+    os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
 
-    for i in resp['items']:
-        if i['id']['kind'] == "youtube#video":
-            video_links.append(base_video_url + i['id']['videoId'])
+    api_service_name = "youtube"
+    api_version = "v3"
+    client_secrets_file = "client_secret.json"
 
-    try:
-        next_page_token = resp['nextPageToken']
-        url = first_url + '&pageToken={}'.format(next_page_token)
-    except:
-        break
+    # Get credentials and create an API client
+    flow = google_auth_oauthlib.flow.InstalledAppFlow.from_client_secrets_file(
+        client_secrets_file, scopes)
+    credentials = flow.run_console()
+    youtube = googleapiclient.discovery.build(
+        api_service_name, api_version, credentials=credentials)
 
-print(video_links)
+    request = youtube.search().list(
+        part="snippet",
+        channelId="UCMs8l2DQ7S6tiBDBSn_4isA",
+        maxResults=50,
+        order="date"
+    )
+    response = request.execute()
+
+    print(response)
+
+if __name__ == "__main__":
+    main()
